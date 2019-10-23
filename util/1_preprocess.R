@@ -1,3 +1,5 @@
+library(tidyverse)
+
 drop_mistakes <- function(data){
   # When either a job start or job end appears twice in a row, I must have made a mistake.
   # In this case, we drop the first occurance for start entries, or the second for end entries.
@@ -53,11 +55,12 @@ cut_and_paste <- function(data){
   return(data)
 }
 
-
 preprocess <- function(data){
   data <- drop_mistakes(data = data)
   data <- drop_unfinished(data = data)
   data <- cut_and_paste(data)
+  
+  data$time_duration <- difftime(data$end_time, data$start_time)
   
   return(data)
 }
