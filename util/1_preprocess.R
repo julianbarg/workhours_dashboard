@@ -55,12 +55,35 @@ cut_and_paste <- function(data){
   return(data)
 }
 
+convert_timezone <- function(df, time_col, tz, hours_difference){
+  time_col <- enquo(time_col)
+  
+  df <- df %>%
+    mutate(!! time_col := !! time_col + hours(hours_difference)) %>%
+    mutate(!! time_col := with_tz(!! time_col, "EDT"))
+  
+  return(df)
+}
+
 preprocess <- function(data){
   data <- drop_mistakes(data = data)
   data <- drop_unfinished(data = data)
   data <- cut_and_paste(data)
   
   data$time_duration <- difftime(data$end_time, data$start_time)
+  data$time_duration <- as.integer(data$time_duration)
+  
+  data <- convert_timezone(data, start_time, "EDT", -4)
+  data <- convert_timezone(data, end_time, "EDT", -4)
+  
+  data$project <- map_chr(data$project, ~ gsub("_", " ", .))
+  data$project <- tools::toTitleCase(data$project)
+  
+  data <- data  %>%
+    mutate(project = fct_reorder(project, start_time, .desc=T))
+  
+  data$start_time <- as.character.Date(data$start_time)
+  data$end_time <- as.character.Date(data$end_time)
   
   return(data)
 }
